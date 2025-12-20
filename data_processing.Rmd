@@ -76,5 +76,27 @@ single_item_data %>%
   xlab("Date") + ylab("Units Sold") +
   theme_minimal()
 ```
+```{r fig.width=12, fig.height=4, message=FALSE}
 
+lambda_total <- total_sales %>%
+  features(total_units + 1, features = guerrero) %>%
+  pull(lambda_guerrero)
 
+print(paste("Optimal Lambda for Global Sales:", round(lambda_total, 3)))
+
+total_sales %>%
+  autoplot(box_cox(total_units + 1, lambda_total)) +
+  ggtitle(paste0("Transformed Global Sales (Box-Cox, lambda = ", round(lambda_total, 2), ")")) +
+  ylab("Transformed Units") +
+  theme_minimal()
+
+total_sales %>%
+  model(
+    STL(box_cox(total_units + 1, lambda_total) ~ season(period = 7) + season(period = 365.25),
+    robust = TRUE)
+  ) %>%
+  components() %>%
+  autoplot() +
+  ggtitle("Decomposition of Global Sales (Transformed)")
+
+```
