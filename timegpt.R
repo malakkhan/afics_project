@@ -29,7 +29,7 @@ train_data$date <- as.Date(train_data$date)
 val_data$date   <- as.Date(val_data$date)
 test_data$date   <- as.Date(test_data$date)
 
-nixtla_set_api_key("nixak-x72bdiwGFCJZJheii9ZpMh49431M3dgCi0Z43v1hWjWtPnKdIv1U8TVfUX2h6S2F6G3VaivBZ0zYwnUz")
+nixtla_set_api_key("YOUR_API_HERE")
 
 h_test <- length(unique(test_data$date))
 
