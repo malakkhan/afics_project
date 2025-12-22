@@ -67,18 +67,37 @@ for(evt in event_types) {
   # Create a clean column name (remove spaces and special chars)
   col_name <- str_replace_all(evt, "[^[:alnum:]]", "")
   
-  # Add binary column
   calendar <- calendar %>%
     mutate(
-      is_event_today = coalesce(event_name_1 == evt, FALSE) | coalesce(event_name_2 == evt, FALSE),
-      !!col_name := as.integer(
-        is_event_today |
-        lead(is_event_today, 1, default = FALSE) |
-        lead(is_event_today, 2, default = FALSE) |
-        lead(is_event_today, 3, default = FALSE)
+      is_event_today = coalesce(event_name_1 == evt, FALSE) | coalesce(event_name_2 == evt, FALSE)
+    )
+  
+  # Apply specific logic for Christmas vs. other events
+  if (evt == "Christmas") {
+    calendar <- calendar %>%
+      mutate(
+        !!col_name := as.integer(
+          # EXCLUDE current day, only check leads (preceding days)
+          lead(is_event_today, 1, default = FALSE) |
+          lead(is_event_today, 2, default = FALSE) |
+          lead(is_event_today, 3, default = FALSE)
+        )
       )
-    ) %>%
-    select(-is_event_today)
+  } else {
+    calendar <- calendar %>%
+      mutate(
+        !!col_name := as.integer(
+          # INCLUDE current day along with leads
+          is_event_today |
+          lead(is_event_today, 1, default = FALSE) |
+          lead(is_event_today, 2, default = FALSE) |
+          lead(is_event_today, 3, default = FALSE)
+        )
+      )
+  }
+  
+  # Clean up temporary column
+  calendar <- calendar %>% select(-is_event_today)
 }
 ```
 
@@ -316,7 +335,7 @@ daily_sales_agg %>%
 
 
 
-```{r plot_event_impact, fig.width=15, fig.height=60}
+```{r plot_event_impact, fig.width=15, fig.height=100}
 # 1. Aggregate to Daily Global Sales
 # ----------------------------------
 daily_sales_agg <- product_tsibble %>%
@@ -540,171 +559,214 @@ For each $K$, we test four predictor configurations:
 4.  **Full**: Fourier + `sell_price` + Significant Events.
 
 ```{r fit_harmonic_regression}
-# 1. Define the list of statistically significant predictors
-# ---------------------------------------------------------
-sig_events <- c(
-  "snap_TX", "halloween", "columbusday", "laborday", 
-  "independenceday", "fathersday", "easter", "eidalfitr", "christmas"
-)
+library(dplyr)
+library(fable)
+library(tsibble)
+library(stringr)
+library(tidyr)
+library(readr)
 
-# 2. Define Helper Function to Construct Formulas
-# -----------------------------------------------
-# CHANGED: 'K' is now uppercase in the function definition to match the calls below.
+# 0. Data Overview
+# ----------------------------
+# Assumes 'product_tsibble' is already loaded in your environment
+print(paste("Processing ALL", length(unique(product_tsibble$id)), "products."))
+
+# 1. Define Predictors & Helper
+# -----------------------------
+sig_events <- c("snap_TX", "halloween", "columbusday", "laborday",
+                "independenceday", "fathersday", "easter", "eidalfitr", "christmas")
+
 build_harmonic_formula <- function(K, include_price = FALSE, include_events = FALSE) {
-  # Start with Fourier terms
   rhs <- paste0("fourier(period = 'year', K = ", K, ")")
-  
-  # Add Price
-  if(include_price) {
-    rhs <- paste(rhs, "+ sell_price")
-  }
-  
-  # Add Events
+  if(include_price) rhs <- paste(rhs, "+ sell_price")
   if(include_events) {
-    # Paste all event names with "+" separator
     events_string <- paste(sig_events, collapse = " + ")
     rhs <- paste(rhs, "+", events_string)
   }
-  
-  # Return as formula
   as.formula(paste("sales_volume ~", rhs))
 }
 
-# 3. Fit Models Grid
-# ------------------
-# WARNING: This fits 12 ARIMA models for EACH product ID. 
-# If you have thousands of products, this step will be computationally intensive.
-harmonic_models <- product_tsibble %>%
+# 2. Fit The "Horse Race" Models (ON ALL DATA)
+# ------------------------------
+# Warning: This step may take significant time/memory depending on dataset size
+robust_models <- product_tsibble %>%
   model(
-    # --- K = 1 (Smooth) ---
-    k1_base   = ARIMA(!!build_harmonic_formula(K=1, include_price=FALSE, include_events=FALSE)),
-    k1_price  = ARIMA(!!build_harmonic_formula(K=1, include_price=TRUE,  include_events=FALSE)),
-    k1_events = ARIMA(!!build_harmonic_formula(K=1, include_price=FALSE, include_events=TRUE)),
-    k1_full   = ARIMA(!!build_harmonic_formula(K=1, include_price=TRUE,  include_events=TRUE)),
-    
-    # --- K = 5 (Medium) ---
-    k5_base   = ARIMA(!!build_harmonic_formula(K=5, include_price=FALSE, include_events=FALSE)),
-    k5_price  = ARIMA(!!build_harmonic_formula(K=5, include_price=TRUE,  include_events=FALSE)),
-    k5_events = ARIMA(!!build_harmonic_formula(K=5, include_price=FALSE, include_events=TRUE)),
-    k5_full   = ARIMA(!!build_harmonic_formula(K=5, include_price=TRUE,  include_events=TRUE)),
-    
-    # --- K = 10 (Complex) ---
-    k10_base   = ARIMA(!!build_harmonic_formula(K=10, include_price=FALSE, include_events=FALSE)),
-    k10_price  = ARIMA(!!build_harmonic_formula(K=10, include_price=TRUE,  include_events=FALSE)),
-    k10_events = ARIMA(!!build_harmonic_formula(K=10, include_price=FALSE, include_events=TRUE)),
-    k10_full   = ARIMA(!!build_harmonic_formula(K=10, include_price=TRUE,  include_events=TRUE))
+    arima_complex = ARIMA(!!build_harmonic_formula(K=3, include_price=TRUE, include_events=TRUE)),
+    croston = CROSTON(sales_volume),
+    snaive = SNAIVE(sales_volume ~ lag("year"))
   )
 
-# 4. Compare Model Performance (AICc)
-# -----------------------------------
-# We look at which model specification wins most frequently across products.
-model_rankings <- harmonic_models %>%
-  glance() %>%
-  group_by(id) %>%
-  filter(AICc == min(AICc)) %>%
-  ungroup() %>%
-  count(.model, name = "count_best_fit") %>%
-  arrange(desc(count_best_fit))
+print("Models fitted on all products. Moving to forecast phase...")
 
-# Display the "Leaderboard" of models
-knitr::kable(model_rankings, caption = "Count of Products where each Model was the Best Fit (Lowest AICc)")
-```
+# -----------------------------------------------------------------------------
+# LOAD EXTERNAL DATA
+# -----------------------------------------------------------------------------
 
+# Load Prices
+prices_raw <- read_csv("data/sell_prices_afcs2025.csv")
 
-```{r validation_setup}
-# 1. Load Validation Data (Ground Truth)
-# --------------------------------------
+# Load Validation Data
 validation_raw <- read_csv("data/sales_test_validation_afcs2025.csv")
 
-# Process Validation Data: Pivot to Long Format
-# We must match the structure of the training data exactly.
-validation_long <- validation_raw %>%
-  pivot_longer(
-    cols = starts_with("d_"),
-    names_to = "d",
-    values_to = "sales_volume"
-  ) %>%
-  mutate(
-    # Extract IDs to ensure key matching
-    item_id = str_sub(id, 1, 11),
-    store_id_temp = str_sub(id, 13, nchar(id)),
-    store_id = str_remove(store_id_temp, "_validation")
-  ) %>%
-  select(-store_id_temp) %>%
-  # Join with Calendar to get actual dates
-  left_join(calendar, by = "d") %>%
-  # Select only relevant columns for joining/metrics
-  select(id, date, sales_volume)
+# Ensure Calendar is loaded
+if(!exists("calendar")) {
+  calendar <- read_csv("data/calendar_afcs2025.csv")
+}
 
-# Convert to Tsibble for comparison
-validation_ts <- validation_long %>%
+# -----------------------------------------------------------------------------
+
+# 3. Prepare Validation Set (ALL PRODUCTS)
+# -------------------------
+validation_ts <- validation_raw %>%
+  pivot_longer(cols = starts_with("d_"), names_to = "d", values_to = "sales_volume") %>%
+  mutate(
+    item_id = str_sub(id, 1, 11),
+    store_id = str_remove(str_sub(id, 13, nchar(id)), "_validation")
+  ) %>%
+  left_join(calendar, by = "d") %>%
+  select(id, date, sales_volume) %>%
   arrange(id, date) %>%
   as_tsibble(key = id, index = date)
+  # Removed filter(id %in% selected_ids)
 
-
-# 2. Prepare Future Regressors for the next 28 days
-# -------------------------------------------------
-# ARIMA with exogenous regressors needs future values for Price and Events.
+# 4. Prepare Future Regressors
+# ----------------------------
+# Using product_tsibble (all data) instead of subset
 future_scenarios <- new_data(product_tsibble, n = 28) %>%
-  # Join Calendar to get future events (snap_TX, halloween, etc.) & wm_yr_wk
   left_join(calendar, by = "date") %>%
-  # Re-extract item_id and store_id from the 'id' key to join with prices
   mutate(
     item_id = str_sub(id, 1, 11),
-    store_id_temp = str_sub(id, 13, nchar(id)),
-    store_id = str_remove(store_id_temp, "_validation")
+    store_id = str_remove(str_sub(id, 13, nchar(id)), "_validation")
   ) %>%
-  # Join Prices to get future sell_price
   left_join(prices_raw, by = c("store_id", "item_id", "wm_yr_wk")) %>%
-  # Handle missing prices if any (carry forward last known price)
   group_by(id) %>%
   fill(sell_price, .direction = "downup") %>%
   ungroup()
 
-
-# 3. Generate Forecasts
+# 5. Generate Forecasts
 # ---------------------
-# This generates 28-day forecasts for ALL 12 models for ALL products.
-# Note: This step can be memory intensive.
-forecasts <- harmonic_models %>%
+forecasts <- robust_models %>%
   forecast(new_data = future_scenarios)
 
-# 4. Compute Accuracy (RMSE) on Validation Set
-# --------------------------------------------
-# We compare the forecasts against the actual validation_ts
+# 6. Race Results: Who Won? (Compute RMSE)
+# ----------------------------------------
 accuracy_results <- forecasts %>%
-  accuracy(validation_ts, measures = list(RMSE = RMSE)) %>%
-  select(.model, id, RMSE)
+  accuracy(validation_ts, measures = list(RMSE = RMSE))
 
-# 5. Leaderboard: Which model wins most often on RMSE?
-# ----------------------------------------------------
-rmse_leaderboard <- accuracy_results %>%
+# 7. Select the Winner Per Product
+# --------------------------------
+best_model_per_product <- accuracy_results %>%
   group_by(id) %>%
-  # Find the model with the minimum RMSE for each product
   filter(RMSE == min(RMSE, na.rm = TRUE)) %>%
+  slice(1) %>%
   ungroup() %>%
-  # Count how many times each model was the winner
-  count(.model, name = "products_won") %>%
-  arrange(desc(products_won))
+  select(id, .model, RMSE)
 
-# 6. Compute Accuracy (MASE) on Validation Set
-# --------------------------------------------
-# We compare the forecasts against the actual validation_ts
-accuracy_results <- forecasts %>%
-  accuracy(validation_ts, measures = list(MASE = MASE)) %>%
-  select(.model, id, MASE)
+# 8. Create Final Submission
+# --------------------------
+final_submission <- forecasts %>%
+  inner_join(best_model_per_product, by = c("id", ".model")) %>%
+  as_tibble() %>%
+  select(id, date, .mean) %>%
+  rename(forecast = .mean)
 
-# 7. Leaderboard: Which model wins most often on MASE?
-# ----------------------------------------------------
-MASE_leaderboard <- accuracy_results %>%
+print("Winning Model Counts:")
+print(table(best_model_per_product$.model))
+
+print("Preview of Final Forecasts:")
+print(head(final_submission))
+```
+
+
+```{r select_product_for_winner}
+library(ggplot2)
+
+# 1. Identify Products with > 75% Non-Zero Sales
+# ----------------------------------------------
+high_velocity_ids <- product_tsibble %>%
+  as_tibble() %>%
   group_by(id) %>%
-  # Find the model with the minimum MASE for each product
-  filter(MASE == min(MASE, na.rm = TRUE)) %>%
-  ungroup() %>%
-  # Count how many times each model was the winner
-  count(.model, name = "products_won") %>%
-  arrange(desc(products_won))
+  summarise(
+    n_total = n(),
+    n_nonzero = sum(sales_volume > 0, na.rm = TRUE),
+    nonzero_pct = n_nonzero / n_total
+  ) %>%
+  filter(nonzero_pct > 0.75) %>%
+  pull(id)
 
-# Display Results
-knitr::kable(MASE_leaderboard, caption = "Model Leaderboard: Count of Products Won by MASE on Validation Set (Next 28 Days)")
+print(paste("Found", length(high_velocity_ids), "products with > 75% non-zero sales."))
+
+# 2. Select One Specific Product
+# ------------------------------
+# We pick the first one found, or sample one if you prefer
+target_id <- high_velocity_ids[1]
+print(paste("Visualizing Product:", target_id))
+
+# 3. Retrieve Winner & Plot
+# -------------------------
+# Get the name of the winning model for this specific ID
+target_winner_name <- best_model_per_product %>%
+  filter(id == target_id) %>%
+  pull(.model)
+
+print(paste("Winning Model for this product:", target_winner_name))
+
+# Filter forecasts for this specific ID and the winning model
+target_forecast <- forecasts %>%
+  filter(id == target_id, .model == target_winner_name)
+
+# Filter actual validation data for this specific ID
+target_actuals <- validation_ts %>%
+  filter(id == target_id)
+
+# 4. Generate the Plot
+# --------------------
+target_forecast %>%
+  autoplot(target_actuals) +
+  labs(
+    title = paste("Forecast vs Actuals:", target_id),
+    subtitle = paste("Winning Model:", target_winner_name, "| Data: Validation Set"),
+    y = "Sales Volume",
+    x = "Date"
+  ) +
+  theme_minimal()
+
+library(feasts)
+
+# 1. Isolate the specific winning model object (mable)
+# ---------------------------------------------------
+target_mable <- robust_models %>%
+  filter(id == target_id) %>%
+  select(id, !!sym(target_winner_name))
+
+# 2. Plot Residuals
+# ---------------------------------------------------
+# This shows the Innovation Residuals, ACF, and Distribution
+target_mable %>%
+  gg_tsresiduals() +
+  labs(title = paste("Residual Diagnostics:", target_id, "(", target_winner_name, ")"))
+
+# 1. Extract residuals for the target product
+# ------------------------------------------
+target_residuals <- target_mable %>%
+  augment() %>%
+  as_tibble()
+
+# 2. Find the top 10 largest misses (absolute error)
+# --------------------------------------------------
+top_10_misses <- target_residuals %>%
+  mutate(abs_residual = abs(.innov)) %>%
+  arrange(desc(abs_residual)) %>%
+  slice(1:10) %>%
+  select(id, date, .innov, sales_volume) %>%
+  rename(residual = .innov, actual_sales = sales_volume)
+
+print("Top 10 Dates with Highest Residuals:")
+print(top_10_misses)
+
+top_10_with_context <- top_10_misses %>%
+  left_join(calendar, by = "date") %>%
+  select(date, residual, actual_sales, event_name_1, snap_TX)
+
+print(top_10_with_context)
 ```

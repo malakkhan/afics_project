@@ -187,19 +187,38 @@ window.Quarto = {
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Create a clean column name (remove spaces and special chars)</span></span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  col_name <span class="ot">&lt;-</span> <span class="fu">str_replace_all</span>(evt, <span class="st">"[^[:alnum:]]"</span>, <span class="st">""</span>)</span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add binary column</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  calendar <span class="ot">&lt;-</span> calendar <span class="sc">%&gt;%</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">is_event_today =</span> <span class="fu">coalesce</span>(event_name_1 <span class="sc">==</span> evt, <span class="cn">FALSE</span>) <span class="sc">|</span> <span class="fu">coalesce</span>(event_name_2 <span class="sc">==</span> evt, <span class="cn">FALSE</span>),</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>      <span class="sc">!!</span><span class="at">col_name :=</span> <span class="fu">as.integer</span>(</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        is_event_today <span class="sc">|</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        <span class="fu">lead</span>(is_event_today, <span class="dv">1</span>, <span class="at">default =</span> <span class="cn">FALSE</span>) <span class="sc">|</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        <span class="fu">lead</span>(is_event_today, <span class="dv">2</span>, <span class="at">default =</span> <span class="cn">FALSE</span>) <span class="sc">|</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>        <span class="fu">lead</span>(is_event_today, <span class="dv">3</span>, <span class="at">default =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="sc">-</span>is_event_today)</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  calendar <span class="ot">&lt;-</span> calendar <span class="sc">%&gt;%</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">is_event_today =</span> <span class="fu">coalesce</span>(event_name_1 <span class="sc">==</span> evt, <span class="cn">FALSE</span>) <span class="sc">|</span> <span class="fu">coalesce</span>(event_name_2 <span class="sc">==</span> evt, <span class="cn">FALSE</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Apply specific logic for Christmas vs. other events</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (evt <span class="sc">==</span> <span class="st">"Christmas"</span>) {</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    calendar <span class="ot">&lt;-</span> calendar <span class="sc">%&gt;%</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>        <span class="sc">!!</span><span class="at">col_name :=</span> <span class="fu">as.integer</span>(</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>          <span class="co"># EXCLUDE current day, only check leads (preceding days)</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">1</span>, <span class="at">default =</span> <span class="cn">FALSE</span>) <span class="sc">|</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">2</span>, <span class="at">default =</span> <span class="cn">FALSE</span>) <span class="sc">|</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">3</span>, <span class="at">default =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    calendar <span class="ot">&lt;-</span> calendar <span class="sc">%&gt;%</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>        <span class="sc">!!</span><span class="at">col_name :=</span> <span class="fu">as.integer</span>(</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>          <span class="co"># INCLUDE current day along with leads</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>          is_event_today <span class="sc">|</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">1</span>, <span class="at">default =</span> <span class="cn">FALSE</span>) <span class="sc">|</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">2</span>, <span class="at">default =</span> <span class="cn">FALSE</span>) <span class="sc">|</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">3</span>, <span class="at">default =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Clean up temporary column</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>  calendar <span class="ot">&lt;-</span> calendar <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>is_event_today)</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>
@@ -262,8 +281,8 @@ window.Quarto = {
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="fu">gc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>           used  (Mb) gc trigger   (Mb) limit (Mb)  max used   (Mb)
-Ncells  1500584  80.2    2659891  142.1         NA   2659891  142.1
-Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
+Ncells  1500730  80.2    2660121  142.1         NA   2660121  142.1
+Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Output the final tsibble</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>product_tsibble</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -751,76 +770,76 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">27.196725</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">Christmas</td>
+<td style="text-align: right;">1590.933</td>
+<td style="text-align: right;">1566.698</td>
+<td style="text-align: right;">24.235757</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">CincoDeMayo</td>
 <td style="text-align: right;">1571.900</td>
 <td style="text-align: right;">1566.835</td>
 <td style="text-align: right;">5.065346</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">EidAlAdha</td>
 <td style="text-align: right;">1566.550</td>
 <td style="text-align: right;">1566.891</td>
 <td style="text-align: right;">-0.341178</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">OrthodoxChristmas</td>
 <td style="text-align: right;">1548.950</td>
 <td style="text-align: right;">1567.077</td>
 <td style="text-align: right;">-18.127126</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">LentWeek2</td>
 <td style="text-align: right;">1543.583</td>
 <td style="text-align: right;">1567.184</td>
 <td style="text-align: right;">-23.600362</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">VeteransDay</td>
 <td style="text-align: right;">1540.650</td>
 <td style="text-align: right;">1567.165</td>
 <td style="text-align: right;">-26.514818</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">PurimEnd</td>
 <td style="text-align: right;">1530.875</td>
 <td style="text-align: right;">1567.345</td>
 <td style="text-align: right;">-36.470156</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">Thanksgiving</td>
 <td style="text-align: right;">1509.750</td>
 <td style="text-align: right;">1567.491</td>
 <td style="text-align: right;">-57.741284</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">LentStart</td>
 <td style="text-align: right;">1493.875</td>
 <td style="text-align: right;">1567.815</td>
 <td style="text-align: right;">-73.940246</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">NewYear</td>
 <td style="text-align: right;">1428.200</td>
 <td style="text-align: right;">1568.353</td>
 <td style="text-align: right;">-140.152879</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">ChanukahEnd</td>
 <td style="text-align: right;">1409.750</td>
 <td style="text-align: right;">1568.548</td>
 <td style="text-align: right;">-158.797808</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">Halloween</td>
 <td style="text-align: right;">1311.650</td>
 <td style="text-align: right;">1569.584</td>
 <td style="text-align: right;">-257.934258</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Christmas</td>
-<td style="text-align: right;">1193.750</td>
-<td style="text-align: right;">1570.830</td>
-<td style="text-align: right;">-377.079900</td>
 </tr>
 </tbody>
 </table>
@@ -998,14 +1017,6 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">219.6</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">christmas</td>
-<td style="text-align: right;">2.30</td>
-<td style="text-align: left;">0.0328</td>
-<td style="text-align: right;">1193.8</td>
-<td style="text-align: right;">1570.8</td>
-<td style="text-align: right;">-377.0</td>
-</tr>
-<tr class="even">
 <td style="text-align: left;">newyear</td>
 <td style="text-align: right;">2.06</td>
 <td style="text-align: left;">0.0532</td>
@@ -1013,7 +1024,7 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1568.4</td>
 <td style="text-align: right;">-140.2</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">chanukahend</td>
 <td style="text-align: right;">1.82</td>
 <td style="text-align: left;">0.0843</td>
@@ -1021,7 +1032,7 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1568.5</td>
 <td style="text-align: right;">-158.7</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">presidentsday</td>
 <td style="text-align: right;">-1.68</td>
 <td style="text-align: left;">0.1068</td>
@@ -1029,7 +1040,7 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1565.7</td>
 <td style="text-align: right;">93.3</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">nbafinalsend</td>
 <td style="text-align: right;">-1.53</td>
 <td style="text-align: left;">0.1413</td>
@@ -1037,7 +1048,7 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1564.5</td>
 <td style="text-align: right;">227.5</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">superbowl</td>
 <td style="text-align: right;">-1.31</td>
 <td style="text-align: left;">0.2016</td>
@@ -1045,7 +1056,7 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1565.5</td>
 <td style="text-align: right;">110.6</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">memorialday</td>
 <td style="text-align: right;">-1.31</td>
 <td style="text-align: left;">0.2039</td>
@@ -1053,7 +1064,7 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1566.1</td>
 <td style="text-align: right;">74.2</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">orthodoxeaster</td>
 <td style="text-align: right;">-1.11</td>
 <td style="text-align: left;">0.2816</td>
@@ -1061,7 +1072,7 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1565.9</td>
 <td style="text-align: right;">93.5</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">lentstart</td>
 <td style="text-align: right;">1.06</td>
 <td style="text-align: left;">0.2979</td>
@@ -1069,7 +1080,7 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1567.8</td>
 <td style="text-align: right;">-73.9</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">nbafinalsstart</td>
 <td style="text-align: right;">-0.99</td>
 <td style="text-align: left;">0.333</td>
@@ -1077,7 +1088,7 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1566.1</td>
 <td style="text-align: right;">74.9</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">stpatricksday</td>
 <td style="text-align: right;">-0.89</td>
 <td style="text-align: left;">0.3798</td>
@@ -1085,7 +1096,7 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1566.3</td>
 <td style="text-align: right;">49.6</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">thanksgiving</td>
 <td style="text-align: right;">0.88</td>
 <td style="text-align: left;">0.3895</td>
@@ -1093,7 +1104,7 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1567.5</td>
 <td style="text-align: right;">-57.7</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">valentinesday</td>
 <td style="text-align: right;">-0.85</td>
 <td style="text-align: left;">0.4044</td>
@@ -1101,7 +1112,7 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1566.2</td>
 <td style="text-align: right;">55.4</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ramadanstarts</td>
 <td style="text-align: right;">-0.78</td>
 <td style="text-align: left;">0.4447</td>
@@ -1109,7 +1120,7 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1565.7</td>
 <td style="text-align: right;">111.2</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">mothersday</td>
 <td style="text-align: right;">-0.74</td>
 <td style="text-align: left;">0.469</td>
@@ -1117,7 +1128,7 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1566.2</td>
 <td style="text-align: right;">65.6</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">purimend</td>
 <td style="text-align: right;">0.71</td>
 <td style="text-align: left;">0.4842</td>
@@ -1125,7 +1136,7 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1567.3</td>
 <td style="text-align: right;">-36.4</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">martinlutherkingday</td>
 <td style="text-align: right;">-0.57</td>
 <td style="text-align: left;">0.5748</td>
@@ -1133,7 +1144,7 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1566.6</td>
 <td style="text-align: right;">27.2</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">veteransday</td>
 <td style="text-align: right;">0.49</td>
 <td style="text-align: left;">0.6297</td>
@@ -1141,13 +1152,21 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <td style="text-align: right;">1567.2</td>
 <td style="text-align: right;">-26.5</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">pesachend</td>
 <td style="text-align: right;">-0.45</td>
 <td style="text-align: left;">0.656</td>
 <td style="text-align: right;">1604.4</td>
 <td style="text-align: right;">1566.5</td>
 <td style="text-align: right;">37.9</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">christmas</td>
+<td style="text-align: right;">-0.41</td>
+<td style="text-align: left;">0.6859</td>
+<td style="text-align: right;">1590.9</td>
+<td style="text-align: right;">1566.7</td>
+<td style="text-align: right;">24.2</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">orthodoxchristmas</td>
@@ -1190,71 +1209,291 @@ Vcells 53859137 411.0  204494468 1560.2      65536 233400881 1780.8</code></pre>
 <h2 class="anchored" data-anchor-id="dynamic-harmonic-regression-modeling">10. Dynamic Harmonic Regression Modeling</h2>
 <p>We now proceed to fit Dynamic Harmonic Regression models. We use <strong>Fourier terms</strong> to capture the annual seasonality (<span class="math inline">\(period = "year"\)</span>) because the data is daily. We test three levels of complexity for the seasonal shape: * <strong><span class="math inline">\(K=1\)</span></strong>: Smooth, sine-wave-like annual pattern. * <strong><span class="math inline">\(K=5\)</span></strong>: Moderate complexity, capturing broader seasonal shifts. * <strong><span class="math inline">\(K=10\)</span></strong>: High complexity, capturing sharper seasonal peaks.</p>
 <p>For each <span class="math inline">\(K\)</span>, we test four predictor configurations: 1. <strong>Base</strong>: Fourier terms only. 2. <strong>Price</strong>: Fourier + <code>sell_price</code>. 3. <strong>Events</strong>: Fourier + Significant Events (<code>snap_TX</code>, <code>halloween</code>, etc.). 4. <strong>Full</strong>: Fourier + <code>sell_price</code> + Significant Events.</p>
-</section>
-<section id="define-the-list-of-statistically-significant-predictors" class="level1">
-<h1>1. Define the list of statistically significant predictors</h1>
-</section>
-<section id="section" class="level1">
-<h1>———————————————————</h1>
-</section>
-<section id="based-on-the-hypothesis-test-results-and-ensuring-names-match-the-columns-in-product_tsibble" class="level1">
-<h1>Based on the hypothesis test results (and ensuring names match the columns in product_tsibble)</h1>
-<p>sig_events &lt;- c( “snap_TX”, “halloween”, “columbusday”, “laborday”, “independenceday”, “fathersday”, “easter”, “eidalfitr”, “christmas” )</p>
-</section>
-<section id="define-helper-function-to-construct-formulas" class="level1">
-<h1>2. Define Helper Function to Construct Formulas</h1>
-</section>
-<section id="section-1" class="level1">
-<h1>———————————————–</h1>
-</section>
-<section id="this-prevents-us-from-having-to-type-out-the-long-event-string-12-times." class="level1">
-<h1>This prevents us from having to type out the long event string 12 times.</h1>
-<p>build_harmonic_formula &lt;- function(k, include_price = FALSE, include_events = FALSE) { # Start with Fourier terms rhs &lt;- paste0(“fourier(period = ‘year’, K =”, k, “)”)</p>
-<p># Add Price if(include_price) { rhs &lt;- paste(rhs, “+ sell_price”) }</p>
-<p># Add Events if(include_events) { # Paste all event names with “+” separator events_string &lt;- paste(sig_events, collapse = ” + “) rhs &lt;- paste(rhs,”+“, events_string) }</p>
-<p># Return as formula as.formula(paste(“sales_volume ~”, rhs)) }</p>
-</section>
-<section id="fit-models-grid" class="level1">
-<h1>3. Fit Models Grid</h1>
-</section>
-<section id="section-2" class="level1">
-<h1>——————</h1>
-</section>
-<section id="warning-this-fits-12-arima-models-for-each-product-id." class="level1">
-<h1>WARNING: This fits 12 ARIMA models for EACH product ID.</h1>
-</section>
-<section id="if-you-have-thousands-of-products-this-step-will-be-computationally-intensive." class="level1">
-<h1>If you have thousands of products, this step will be computationally intensive.</h1>
-</section>
-<section id="consider-testing-on-a-subset-first-using-filterproduct_tsibble-id-in-uniqueid15" class="level1">
-<h1>Consider testing on a subset first using: filter(product_tsibble, id %in% unique(id)[1:5])</h1>
-<p>harmonic_models &lt;- product_tsibble %&gt;% model( # — K = 1 (Smooth) — k1_base = ARIMA(!!build_harmonic_formula(K=1, include_price=FALSE, include_events=FALSE)), k1_price = ARIMA(!!build_harmonic_formula(K=1, include_price=TRUE, include_events=FALSE)), k1_events = ARIMA(!!build_harmonic_formula(K=1, include_price=FALSE, include_events=TRUE)), k1_full = ARIMA(!!build_harmonic_formula(K=1, include_price=TRUE, include_events=TRUE)),</p>
-<pre><code># --- K = 5 (Medium) ---
-k5_base   = ARIMA(!!build_harmonic_formula(K=5, include_price=FALSE, include_events=FALSE)),
-k5_price  = ARIMA(!!build_harmonic_formula(K=5, include_price=TRUE,  include_events=FALSE)),
-k5_events = ARIMA(!!build_harmonic_formula(K=5, include_price=FALSE, include_events=TRUE)),
-k5_full   = ARIMA(!!build_harmonic_formula(K=5, include_price=TRUE,  include_events=TRUE)),
-
-# --- K = 10 (Complex) ---
-k10_base   = ARIMA(!!build_harmonic_formula(K=10, include_price=FALSE, include_events=FALSE)),
-k10_price  = ARIMA(!!build_harmonic_formula(K=10, include_price=TRUE,  include_events=FALSE)),
-k10_events = ARIMA(!!build_harmonic_formula(K=10, include_price=FALSE, include_events=TRUE)),
-k10_full   = ARIMA(!!build_harmonic_formula(K=10, include_price=TRUE,  include_events=TRUE))</code></pre>
-<p>)</p>
-</section>
-<section id="compare-model-performance-aicc" class="level1">
-<h1>4. Compare Model Performance (AICc)</h1>
-</section>
-<section id="section-3" class="level1">
-<h1>———————————–</h1>
-</section>
-<section id="we-look-at-which-model-specification-wins-most-frequently-across-products." class="level1">
-<h1>We look at which model specification wins most frequently across products.</h1>
-<p>model_rankings &lt;- harmonic_models %&gt;% glance() %&gt;% group_by(id) %&gt;% filter(AICc == min(AICc)) %&gt;% ungroup() %&gt;% count(.model, name = “count_best_fit”) %&gt;% arrange(desc(count_best_fit))</p>
-</section>
-<section id="display-the-leaderboard-of-models" class="level1">
-<h1>Display the “Leaderboard” of models</h1>
-<p>knitr::kable(model_rankings, caption = “Count of Products where each Model was the Best Fit (Lowest AICc)”)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fable)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tsibble)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="co"># 0. Data Overview</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Assumes 'product_tsibble' is already loaded in your environment</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"Processing ALL"</span>, <span class="fu">length</span>(<span class="fu">unique</span>(product_tsibble<span class="sc">$</span>id)), <span class="st">"products."</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Processing ALL 823 products."</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Define Predictors &amp; Helper</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="co"># -----------------------------</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>sig_events <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"snap_TX"</span>, <span class="st">"halloween"</span>, <span class="st">"columbusday"</span>, <span class="st">"laborday"</span>,</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>                <span class="st">"independenceday"</span>, <span class="st">"fathersday"</span>, <span class="st">"easter"</span>, <span class="st">"eidalfitr"</span>, <span class="st">"christmas"</span>)</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>build_harmonic_formula <span class="ot">&lt;-</span> <span class="cf">function</span>(K, <span class="at">include_price =</span> <span class="cn">FALSE</span>, <span class="at">include_events =</span> <span class="cn">FALSE</span>) {</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>  rhs <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"fourier(period = 'year', K = "</span>, K, <span class="st">")"</span>)</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(include_price) rhs <span class="ot">&lt;-</span> <span class="fu">paste</span>(rhs, <span class="st">"+ sell_price"</span>)</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(include_events) {</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>    events_string <span class="ot">&lt;-</span> <span class="fu">paste</span>(sig_events, <span class="at">collapse =</span> <span class="st">" + "</span>)</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>    rhs <span class="ot">&lt;-</span> <span class="fu">paste</span>(rhs, <span class="st">"+"</span>, events_string)</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.formula</span>(<span class="fu">paste</span>(<span class="st">"sales_volume ~"</span>, rhs))</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Fit The "Horse Race" Models (ON ALL DATA)</span></span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a><span class="co"># ------------------------------</span></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Warning: This step may take significant time/memory depending on dataset size</span></span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>robust_models <span class="ot">&lt;-</span> product_tsibble <span class="sc">%&gt;%</span></span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">model</span>(</span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">arima_complex =</span> <span class="fu">ARIMA</span>(<span class="sc">!!</span><span class="fu">build_harmonic_formula</span>(<span class="at">K=</span><span class="dv">3</span>, <span class="at">include_price=</span><span class="cn">TRUE</span>, <span class="at">include_events=</span><span class="cn">TRUE</span>)),</span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">croston =</span> <span class="fu">CROSTON</span>(sales_volume),</span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">snaive =</span> <span class="fu">SNAIVE</span>(sales_volume <span class="sc">~</span> <span class="fu">lag</span>(<span class="st">"year"</span>))</span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"Models fitted on all products. Moving to forecast phase..."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Models fitted on all products. Moving to forecast phase..."</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># -----------------------------------------------------------------------------</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="co"># LOAD EXTERNAL DATA</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="co"># -----------------------------------------------------------------------------</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Load Prices</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>prices_raw <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/sell_prices_afcs2025.csv"</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Load Validation Data</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>validation_raw <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/sales_test_validation_afcs2025.csv"</span>)</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Ensure Calendar is loaded</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">exists</span>(<span class="st">"calendar"</span>)) {</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>  calendar <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/calendar_afcs2025.csv"</span>)</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a><span class="co"># -----------------------------------------------------------------------------</span></span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Prepare Validation Set (ALL PRODUCTS)</span></span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------</span></span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>validation_ts <span class="ot">&lt;-</span> validation_raw <span class="sc">%&gt;%</span></span>
+<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">starts_with</span>(<span class="st">"d_"</span>), <span class="at">names_to =</span> <span class="st">"d"</span>, <span class="at">values_to =</span> <span class="st">"sales_volume"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb29-23"><a href="#cb29-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">item_id =</span> <span class="fu">str_sub</span>(id, <span class="dv">1</span>, <span class="dv">11</span>),</span>
+<span id="cb29-24"><a href="#cb29-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">store_id =</span> <span class="fu">str_remove</span>(<span class="fu">str_sub</span>(id, <span class="dv">13</span>, <span class="fu">nchar</span>(id)), <span class="st">"_validation"</span>)</span>
+<span id="cb29-25"><a href="#cb29-25" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb29-26"><a href="#cb29-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(calendar, <span class="at">by =</span> <span class="st">"d"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb29-27"><a href="#cb29-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, date, sales_volume) <span class="sc">%&gt;%</span></span>
+<span id="cb29-28"><a href="#cb29-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(id, date) <span class="sc">%&gt;%</span></span>
+<span id="cb29-29"><a href="#cb29-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tsibble</span>(<span class="at">key =</span> id, <span class="at">index =</span> date)</span>
+<span id="cb29-30"><a href="#cb29-30" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Removed filter(id %in% selected_ids)</span></span>
+<span id="cb29-31"><a href="#cb29-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-32"><a href="#cb29-32" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Prepare Future Regressors</span></span>
+<span id="cb29-33"><a href="#cb29-33" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb29-34"><a href="#cb29-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Using product_tsibble (all data) instead of subset</span></span>
+<span id="cb29-35"><a href="#cb29-35" aria-hidden="true" tabindex="-1"></a>future_scenarios <span class="ot">&lt;-</span> <span class="fu">new_data</span>(product_tsibble, <span class="at">n =</span> <span class="dv">28</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb29-36"><a href="#cb29-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(calendar, <span class="at">by =</span> <span class="st">"date"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb29-37"><a href="#cb29-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb29-38"><a href="#cb29-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">item_id =</span> <span class="fu">str_sub</span>(id, <span class="dv">1</span>, <span class="dv">11</span>),</span>
+<span id="cb29-39"><a href="#cb29-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">store_id =</span> <span class="fu">str_remove</span>(<span class="fu">str_sub</span>(id, <span class="dv">13</span>, <span class="fu">nchar</span>(id)), <span class="st">"_validation"</span>)</span>
+<span id="cb29-40"><a href="#cb29-40" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb29-41"><a href="#cb29-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(prices_raw, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"store_id"</span>, <span class="st">"item_id"</span>, <span class="st">"wm_yr_wk"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb29-42"><a href="#cb29-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(id) <span class="sc">%&gt;%</span></span>
+<span id="cb29-43"><a href="#cb29-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fill</span>(sell_price, <span class="at">.direction =</span> <span class="st">"downup"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb29-44"><a href="#cb29-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb29-45"><a href="#cb29-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-46"><a href="#cb29-46" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Generate Forecasts</span></span>
+<span id="cb29-47"><a href="#cb29-47" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------</span></span>
+<span id="cb29-48"><a href="#cb29-48" aria-hidden="true" tabindex="-1"></a>forecasts <span class="ot">&lt;-</span> robust_models <span class="sc">%&gt;%</span></span>
+<span id="cb29-49"><a href="#cb29-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">forecast</span>(<span class="at">new_data =</span> future_scenarios)</span>
+<span id="cb29-50"><a href="#cb29-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-51"><a href="#cb29-51" aria-hidden="true" tabindex="-1"></a><span class="co"># 6. Race Results: Who Won? (Compute RMSE)</span></span>
+<span id="cb29-52"><a href="#cb29-52" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------------------</span></span>
+<span id="cb29-53"><a href="#cb29-53" aria-hidden="true" tabindex="-1"></a>accuracy_results <span class="ot">&lt;-</span> forecasts <span class="sc">%&gt;%</span></span>
+<span id="cb29-54"><a href="#cb29-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">accuracy</span>(validation_ts, <span class="at">measures =</span> <span class="fu">list</span>(<span class="at">RMSE =</span> RMSE))</span>
+<span id="cb29-55"><a href="#cb29-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-56"><a href="#cb29-56" aria-hidden="true" tabindex="-1"></a><span class="co"># 7. Select the Winner Per Product</span></span>
+<span id="cb29-57"><a href="#cb29-57" aria-hidden="true" tabindex="-1"></a><span class="co"># --------------------------------</span></span>
+<span id="cb29-58"><a href="#cb29-58" aria-hidden="true" tabindex="-1"></a>best_model_per_product <span class="ot">&lt;-</span> accuracy_results <span class="sc">%&gt;%</span></span>
+<span id="cb29-59"><a href="#cb29-59" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(id) <span class="sc">%&gt;%</span></span>
+<span id="cb29-60"><a href="#cb29-60" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(RMSE <span class="sc">==</span> <span class="fu">min</span>(RMSE, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb29-61"><a href="#cb29-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb29-62"><a href="#cb29-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb29-63"><a href="#cb29-63" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, .model, RMSE)</span>
+<span id="cb29-64"><a href="#cb29-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-65"><a href="#cb29-65" aria-hidden="true" tabindex="-1"></a><span class="co"># 8. Create Final Submission</span></span>
+<span id="cb29-66"><a href="#cb29-66" aria-hidden="true" tabindex="-1"></a><span class="co"># --------------------------</span></span>
+<span id="cb29-67"><a href="#cb29-67" aria-hidden="true" tabindex="-1"></a>final_submission <span class="ot">&lt;-</span> forecasts <span class="sc">%&gt;%</span></span>
+<span id="cb29-68"><a href="#cb29-68" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(best_model_per_product, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"id"</span>, <span class="st">".model"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb29-69"><a href="#cb29-69" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb29-70"><a href="#cb29-70" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, date, .mean) <span class="sc">%&gt;%</span></span>
+<span id="cb29-71"><a href="#cb29-71" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">forecast =</span> .mean)</span>
+<span id="cb29-72"><a href="#cb29-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-73"><a href="#cb29-73" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"Winning Model Counts:"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Winning Model Counts:"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">table</span>(best_model_per_product<span class="sc">$</span>.model))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+croston  snaive 
+    778      45 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"Preview of Final Forecasts:"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Preview of Final Forecasts:"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">head</span>(final_submission))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 3
+  id                          date       forecast
+  &lt;chr&gt;                       &lt;date&gt;        &lt;dbl&gt;
+1 FOODS_3_001_TX_3_validation 2016-04-25    0.389
+2 FOODS_3_001_TX_3_validation 2016-04-26    0.389
+3 FOODS_3_001_TX_3_validation 2016-04-27    0.389
+4 FOODS_3_001_TX_3_validation 2016-04-28    0.389
+5 FOODS_3_001_TX_3_validation 2016-04-29    0.389
+6 FOODS_3_001_TX_3_validation 2016-04-30    0.389</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Identify Products with &gt; 75% Non-Zero Sales</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------------------------</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>high_velocity_ids <span class="ot">&lt;-</span> product_tsibble <span class="sc">%&gt;%</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(id) <span class="sc">%&gt;%</span></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_total =</span> <span class="fu">n</span>(),</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_nonzero =</span> <span class="fu">sum</span>(sales_volume <span class="sc">&gt;</span> <span class="dv">0</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">nonzero_pct =</span> n_nonzero <span class="sc">/</span> n_total</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(nonzero_pct <span class="sc">&gt;</span> <span class="fl">0.75</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(id)</span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"Found"</span>, <span class="fu">length</span>(high_velocity_ids), <span class="st">"products with &gt; 75% non-zero sales."</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Found 74 products with &gt; 75% non-zero sales."</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Select One Specific Product</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="co"># ------------------------------</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="co"># We pick the first one found, or sample one if you prefer</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>target_id <span class="ot">&lt;-</span> high_velocity_ids[<span class="dv">1</span>]</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"Visualizing Product:"</span>, target_id))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Visualizing Product: FOODS_3_030_TX_3_validation"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Retrieve Winner &amp; Plot</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the name of the winning model for this specific ID</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>target_winner_name <span class="ot">&lt;-</span> best_model_per_product <span class="sc">%&gt;%</span></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(id <span class="sc">==</span> target_id) <span class="sc">%&gt;%</span></span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(.model)</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"Winning Model for this product:"</span>, target_winner_name))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Winning Model for this product: croston"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter forecasts for this specific ID and the winning model</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>target_forecast <span class="ot">&lt;-</span> forecasts <span class="sc">%&gt;%</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(id <span class="sc">==</span> target_id, .model <span class="sc">==</span> target_winner_name)</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter actual validation data for this specific ID</span></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>target_actuals <span class="ot">&lt;-</span> validation_ts <span class="sc">%&gt;%</span></span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(id <span class="sc">==</span> target_id)</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Generate the Plot</span></span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a><span class="co"># --------------------</span></span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>target_forecast <span class="sc">%&gt;%</span></span>
+<span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">autoplot</span>(target_actuals) <span class="sc">+</span></span>
+<span id="cb43-13"><a href="#cb43-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb43-14"><a href="#cb43-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="fu">paste</span>(<span class="st">"Forecast vs Actuals:"</span>, target_id),</span>
+<span id="cb43-15"><a href="#cb43-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="fu">paste</span>(<span class="st">"Winning Model:"</span>, target_winner_name, <span class="st">"| Data: Validation Set"</span>),</span>
+<span id="cb43-16"><a href="#cb43-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Sales Volume"</span>,</span>
+<span id="cb43-17"><a href="#cb43-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Date"</span></span>
+<span id="cb43-18"><a href="#cb43-18" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb43-19"><a href="#cb43-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="dynamic_regression_pipeline_files/figure-html/select_product_for_winner-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(feasts)</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Isolate the specific winning model object (mable)</span></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------------</span></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>target_mable <span class="ot">&lt;-</span> robust_models <span class="sc">%&gt;%</span></span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(id <span class="sc">==</span> target_id) <span class="sc">%&gt;%</span></span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, <span class="sc">!!</span><span class="fu">sym</span>(target_winner_name))</span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Plot Residuals</span></span>
+<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------------</span></span>
+<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a><span class="co"># This shows the Innovation Residuals, ACF, and Distribution</span></span>
+<span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a>target_mable <span class="sc">%&gt;%</span></span>
+<span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gg_tsresiduals</span>() <span class="sc">+</span></span>
+<span id="cb44-14"><a href="#cb44-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="fu">paste</span>(<span class="st">"Residual Diagnostics:"</span>, target_id, <span class="st">"("</span>, target_winner_name, <span class="st">")"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="dynamic_regression_pipeline_files/figure-html/select_product_for_winner-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Extract residuals for the target product</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="co"># ------------------------------------------</span></span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>target_residuals <span class="ot">&lt;-</span> target_mable <span class="sc">%&gt;%</span></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">augment</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tibble</span>()</span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Find the top 10 largest misses (absolute error)</span></span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a><span class="co"># --------------------------------------------------</span></span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>top_10_misses <span class="ot">&lt;-</span> target_residuals <span class="sc">%&gt;%</span></span>
+<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">abs_residual =</span> <span class="fu">abs</span>(.innov)) <span class="sc">%&gt;%</span></span>
+<span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(abs_residual)) <span class="sc">%&gt;%</span></span>
+<span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb45-13"><a href="#cb45-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, date, .innov, sales_volume) <span class="sc">%&gt;%</span></span>
+<span id="cb45-14"><a href="#cb45-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">residual =</span> .innov, <span class="at">actual_sales =</span> sales_volume)</span>
+<span id="cb45-15"><a href="#cb45-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-16"><a href="#cb45-16" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"Top 10 Dates with Highest Residuals:"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Top 10 Dates with Highest Residuals:"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(top_10_misses)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 4
+   id                          date       residual actual_sales
+   &lt;chr&gt;                       &lt;date&gt;        &lt;dbl&gt;        &lt;dbl&gt;
+ 1 FOODS_3_030_TX_3_validation 2013-12-25   -142.             0
+ 2 FOODS_3_030_TX_3_validation 2014-01-31    141.           246
+ 3 FOODS_3_030_TX_3_validation 2013-11-27    121.           213
+ 4 FOODS_3_030_TX_3_validation 2014-02-01    117.           320
+ 5 FOODS_3_030_TX_3_validation 2014-02-06   -109.             6
+ 6 FOODS_3_030_TX_3_validation 2013-11-28    -97.5           78
+ 7 FOODS_3_030_TX_3_validation 2011-02-12     85.9           90
+ 8 FOODS_3_030_TX_3_validation 2013-08-01     84.6          162
+ 9 FOODS_3_030_TX_3_validation 2013-12-24     83.0          172
+10 FOODS_3_030_TX_3_validation 2013-12-30     81.9          189</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>top_10_with_context <span class="ot">&lt;-</span> top_10_misses <span class="sc">%&gt;%</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(calendar, <span class="at">by =</span> <span class="st">"date"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(date, residual, actual_sales, event_name_1, snap_TX)</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(top_10_with_context)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 5
+   date       residual actual_sales event_name_1 snap_TX
+   &lt;date&gt;        &lt;dbl&gt;        &lt;dbl&gt; &lt;chr&gt;          &lt;dbl&gt;
+ 1 2013-12-25   -142.             0 Christmas          0
+ 2 2014-01-31    141.           246 &lt;NA&gt;               0
+ 3 2013-11-27    121.           213 &lt;NA&gt;               0
+ 4 2014-02-01    117.           320 &lt;NA&gt;               1
+ 5 2014-02-06   -109.             6 &lt;NA&gt;               1
+ 6 2013-11-28    -97.5           78 Thanksgiving       0
+ 7 2011-02-12     85.9           90 &lt;NA&gt;               1
+ 8 2013-08-01     84.6          162 &lt;NA&gt;               1
+ 9 2013-12-24     83.0          172 &lt;NA&gt;               0
+10 2013-12-30     81.9          189 &lt;NA&gt;               0</code></pre>
+</div>
+</div>
 </section>
 
 </main>
