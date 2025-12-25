@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2025-12-22">
+<meta name="dcterms.date" content="2025-12-25">
 
 <title>Sales Data Analysis</title>
 <style>
@@ -122,7 +122,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">December 22, 2025</p>
+      <p class="date">December 25, 2025</p>
     </div>
   </div>
   
@@ -187,38 +187,42 @@ window.Quarto = {
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Create a clean column name (remove spaces and special chars)</span></span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  col_name <span class="ot">&lt;-</span> <span class="fu">str_replace_all</span>(evt, <span class="st">"[^[:alnum:]]"</span>, <span class="st">""</span>)</span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  calendar <span class="ot">&lt;-</span> calendar <span class="sc">%&gt;%</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">is_event_today =</span> <span class="fu">coalesce</span>(event_name_1 <span class="sc">==</span> evt, <span class="cn">FALSE</span>) <span class="sc">|</span> <span class="fu">coalesce</span>(event_name_2 <span class="sc">==</span> evt, <span class="cn">FALSE</span>)</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Apply specific logic for Christmas vs. other events</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (evt <span class="sc">==</span> <span class="st">"Christmas"</span>) {</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    calendar <span class="ot">&lt;-</span> calendar <span class="sc">%&gt;%</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>        <span class="sc">!!</span><span class="at">col_name :=</span> <span class="fu">as.integer</span>(</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>          <span class="co"># EXCLUDE current day, only check leads (preceding days)</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">1</span>, <span class="at">default =</span> <span class="cn">FALSE</span>) <span class="sc">|</span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">2</span>, <span class="at">default =</span> <span class="cn">FALSE</span>) <span class="sc">|</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">3</span>, <span class="at">default =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    calendar <span class="ot">&lt;-</span> calendar <span class="sc">%&gt;%</span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>        <span class="sc">!!</span><span class="at">col_name :=</span> <span class="fu">as.integer</span>(</span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>          <span class="co"># INCLUDE current day along with leads</span></span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>          is_event_today <span class="sc">|</span></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">1</span>, <span class="at">default =</span> <span class="cn">FALSE</span>) <span class="sc">|</span></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">2</span>, <span class="at">default =</span> <span class="cn">FALSE</span>) <span class="sc">|</span></span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">3</span>, <span class="at">default =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Clean up temporary column</span></span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>  calendar <span class="ot">&lt;-</span> calendar <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>is_event_today)</span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># temporary helper to identify the specific event date</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  calendar <span class="ot">&lt;-</span> calendar <span class="sc">%&gt;%</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">is_event_today =</span> <span class="fu">coalesce</span>(event_name_1 <span class="sc">==</span> evt, <span class="cn">FALSE</span>) <span class="sc">|</span> <span class="fu">coalesce</span>(event_name_2 <span class="sc">==</span> evt, <span class="cn">FALSE</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Apply specific logic for Christmas vs. other events</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (evt <span class="sc">==</span> <span class="st">"Christmas"</span>) {</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    calendar <span class="ot">&lt;-</span> calendar <span class="sc">%&gt;%</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Column 1: JUST Christmas Day</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        <span class="sc">!!</span><span class="fu">paste0</span>(col_name, <span class="st">"Day"</span>) <span class="sc">:</span><span class="er">=</span> <span class="fu">as.integer</span>(is_event_today),</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Column 2: JUST the 3 days before Christmas</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>        <span class="sc">!!</span><span class="fu">paste0</span>(col_name, <span class="st">"Pre"</span>) <span class="sc">:</span><span class="er">=</span> <span class="fu">as.integer</span>(</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">1</span>, <span class="at">default =</span> <span class="cn">FALSE</span>) <span class="sc">|</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">2</span>, <span class="at">default =</span> <span class="cn">FALSE</span>) <span class="sc">|</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">3</span>, <span class="at">default =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    calendar <span class="ot">&lt;-</span> calendar <span class="sc">%&gt;%</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Standard Logic: Combine Day + 3 Days Before</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>        <span class="sc">!!</span><span class="at">col_name :=</span> <span class="fu">as.integer</span>(</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>          is_event_today <span class="sc">|</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">1</span>, <span class="at">default =</span> <span class="cn">FALSE</span>) <span class="sc">|</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">2</span>, <span class="at">default =</span> <span class="cn">FALSE</span>) <span class="sc">|</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>          <span class="fu">lead</span>(is_event_today, <span class="dv">3</span>, <span class="at">default =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Clean up temporary column</span></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>  calendar <span class="ot">&lt;-</span> calendar <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>is_event_today)</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>
@@ -281,13 +285,13 @@ window.Quarto = {
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="fu">gc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>           used  (Mb) gc trigger   (Mb) limit (Mb)  max used   (Mb)
-Ncells  1500730  80.2    2660121  142.1         NA   2660121  142.1
-Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
+Ncells  1500742  80.2    2660138  142.1         NA   2660138  142.1
+Vcells 54649367 417.0  206008805 1571.8      65536 236552781 1804.8</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Output the final tsibble</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>product_tsibble</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tsibble: 1,574,399 x 47 [1D]
+<pre><code># A tsibble: 1,574,399 x 48 [1D]
 # Key:       id [823]
    id      d     sales_volume item_id store_id date       wm_yr_wk weekday  wday
    &lt;chr&gt;   &lt;chr&gt;        &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;date&gt;        &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt;
@@ -302,7 +306,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
  9 FOODS_… d_9              2 FOODS_… TX_3     2011-02-06    11102 Sunday      2
 10 FOODS_… d_10             1 FOODS_… TX_3     2011-02-07    11102 Monday      3
 # ℹ 1,574,389 more rows
-# ℹ 38 more variables: month &lt;dbl&gt;, year &lt;dbl&gt;, event_name_1 &lt;chr&gt;,
+# ℹ 39 more variables: month &lt;dbl&gt;, year &lt;dbl&gt;, event_name_1 &lt;chr&gt;,
 #   event_type_1 &lt;chr&gt;, event_name_2 &lt;chr&gt;, event_type_2 &lt;chr&gt;, snap_TX &lt;dbl&gt;,
 #   SuperBowl &lt;int&gt;, ValentinesDay &lt;int&gt;, PresidentsDay &lt;int&gt;, LentStart &lt;int&gt;,
 #   LentWeek2 &lt;int&gt;, StPatricksDay &lt;int&gt;, PurimEnd &lt;int&gt;, OrthodoxEaster &lt;int&gt;,
@@ -539,7 +543,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">"stpatricksday"</span>, <span class="st">"purimend"</span>, <span class="st">"orthodoxeaster"</span>, <span class="st">"pesachend"</span>, <span class="st">"cincodemayo"</span>, </span>
 <span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mothersday"</span>, <span class="st">"memorialday"</span>, <span class="st">"nbafinalsstart"</span>, <span class="st">"nbafinalsend"</span>, <span class="st">"fathersday"</span>, </span>
 <span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"independenceday"</span>, <span class="st">"ramadanstarts"</span>, <span class="st">"eidalfitr"</span>, <span class="st">"laborday"</span>, <span class="st">"columbusday"</span>, </span>
-<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"halloween"</span>, <span class="st">"eidaladha"</span>, <span class="st">"veteransday"</span>, <span class="st">"thanksgiving"</span>, <span class="st">"christmas"</span>, </span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"halloween"</span>, <span class="st">"eidaladha"</span>, <span class="st">"veteransday"</span>, <span class="st">"thanksgiving"</span>, <span class="st">"christmasday"</span>, <span class="st">"christmaspre"</span>, </span>
 <span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>  <span class="st">"chanukahend"</span>, <span class="st">"newyear"</span>, <span class="st">"orthodoxchristmas"</span>, <span class="st">"martinlutherkingday"</span>, <span class="st">"easter"</span>,</span>
 <span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>  <span class="st">"snap_TX"</span></span>
 <span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -770,72 +774,66 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">27.196725</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Christmas</td>
-<td style="text-align: right;">1590.933</td>
-<td style="text-align: right;">1566.698</td>
-<td style="text-align: right;">24.235757</td>
-</tr>
-<tr class="odd">
 <td style="text-align: left;">CincoDeMayo</td>
 <td style="text-align: right;">1571.900</td>
 <td style="text-align: right;">1566.835</td>
 <td style="text-align: right;">5.065346</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">EidAlAdha</td>
 <td style="text-align: right;">1566.550</td>
 <td style="text-align: right;">1566.891</td>
 <td style="text-align: right;">-0.341178</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">OrthodoxChristmas</td>
 <td style="text-align: right;">1548.950</td>
 <td style="text-align: right;">1567.077</td>
 <td style="text-align: right;">-18.127126</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">LentWeek2</td>
 <td style="text-align: right;">1543.583</td>
 <td style="text-align: right;">1567.184</td>
 <td style="text-align: right;">-23.600362</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">VeteransDay</td>
 <td style="text-align: right;">1540.650</td>
 <td style="text-align: right;">1567.165</td>
 <td style="text-align: right;">-26.514818</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">PurimEnd</td>
 <td style="text-align: right;">1530.875</td>
 <td style="text-align: right;">1567.345</td>
 <td style="text-align: right;">-36.470156</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">Thanksgiving</td>
 <td style="text-align: right;">1509.750</td>
 <td style="text-align: right;">1567.491</td>
 <td style="text-align: right;">-57.741284</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">LentStart</td>
 <td style="text-align: right;">1493.875</td>
 <td style="text-align: right;">1567.815</td>
 <td style="text-align: right;">-73.940246</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">NewYear</td>
 <td style="text-align: right;">1428.200</td>
 <td style="text-align: right;">1568.353</td>
 <td style="text-align: right;">-140.152879</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ChanukahEnd</td>
 <td style="text-align: right;">1409.750</td>
 <td style="text-align: right;">1568.548</td>
 <td style="text-align: right;">-158.797808</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">Halloween</td>
 <td style="text-align: right;">1311.650</td>
 <td style="text-align: right;">1569.584</td>
@@ -860,7 +858,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"stpatricksday"</span>, <span class="st">"purimend"</span>, <span class="st">"orthodoxeaster"</span>, <span class="st">"pesachend"</span>, <span class="st">"cincodemayo"</span>, </span>
 <span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mothersday"</span>, <span class="st">"memorialday"</span>, <span class="st">"nbafinalsstart"</span>, <span class="st">"nbafinalsend"</span>, <span class="st">"fathersday"</span>, </span>
 <span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"independenceday"</span>, <span class="st">"ramadanstarts"</span>, <span class="st">"eidalfitr"</span>, <span class="st">"laborday"</span>, <span class="st">"columbusday"</span>, </span>
-<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"halloween"</span>, <span class="st">"eidaladha"</span>, <span class="st">"veteransday"</span>, <span class="st">"thanksgiving"</span>, <span class="st">"christmas"</span>, </span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"halloween"</span>, <span class="st">"eidaladha"</span>, <span class="st">"veteransday"</span>, <span class="st">"thanksgiving"</span>, <span class="st">"christmasday"</span>, <span class="st">"christmaspre"</span>, </span>
 <span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"chanukahend"</span>, <span class="st">"newyear"</span>, <span class="st">"orthodoxchristmas"</span>, <span class="st">"martinlutherkingday"</span>, <span class="st">"easter"</span>,</span>
 <span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">"snap_TX"</span></span>
 <span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -935,11 +933,11 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <caption>Hypothesis Test Results: Impact of Events on Daily Sales (Sorted by Significance)</caption>
 <colgroup>
 <col style="width: 28%">
-<col style="width: 17%">
+<col style="width: 16%">
 <col style="width: 11%">
 <col style="width: 14%">
 <col style="width: 18%">
-<col style="width: 10%">
+<col style="width: 11%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -953,6 +951,14 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
+<td style="text-align: left;">christmasday</td>
+<td style="text-align: right;">205.58</td>
+<td style="text-align: left;">&lt; 0.001</td>
+<td style="text-align: right;">2.2</td>
+<td style="text-align: right;">1571.0</td>
+<td style="text-align: right;">-1568.8</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">snap_TX</td>
 <td style="text-align: right;">-12.35</td>
 <td style="text-align: left;">&lt; 0.001</td>
@@ -960,7 +966,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1501.9</td>
 <td style="text-align: right;">197.3</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">halloween</td>
 <td style="text-align: right;">6.24</td>
 <td style="text-align: left;">&lt; 0.001</td>
@@ -968,7 +974,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1569.6</td>
 <td style="text-align: right;">-257.9</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">columbusday</td>
 <td style="text-align: right;">-5.89</td>
 <td style="text-align: left;">&lt; 0.001</td>
@@ -976,7 +982,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1564.2</td>
 <td style="text-align: right;">259.4</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">laborday</td>
 <td style="text-align: right;">-5.20</td>
 <td style="text-align: left;">&lt; 0.001</td>
@@ -984,7 +990,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1563.0</td>
 <td style="text-align: right;">370.0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">independenceday</td>
 <td style="text-align: right;">-5.09</td>
 <td style="text-align: left;">&lt; 0.001</td>
@@ -992,7 +998,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1564.0</td>
 <td style="text-align: right;">271.8</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">fathersday</td>
 <td style="text-align: right;">-3.68</td>
 <td style="text-align: left;">0.0015</td>
@@ -1000,7 +1006,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1563.8</td>
 <td style="text-align: right;">291.0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">easter</td>
 <td style="text-align: right;">-3.00</td>
 <td style="text-align: left;">0.0063</td>
@@ -1008,7 +1014,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1563.8</td>
 <td style="text-align: right;">243.8</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">eidalfitr</td>
 <td style="text-align: right;">-2.94</td>
 <td style="text-align: left;">0.0082</td>
@@ -1016,7 +1022,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1564.6</td>
 <td style="text-align: right;">219.6</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">newyear</td>
 <td style="text-align: right;">2.06</td>
 <td style="text-align: left;">0.0532</td>
@@ -1024,7 +1030,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1568.4</td>
 <td style="text-align: right;">-140.2</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">chanukahend</td>
 <td style="text-align: right;">1.82</td>
 <td style="text-align: left;">0.0843</td>
@@ -1032,7 +1038,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1568.5</td>
 <td style="text-align: right;">-158.7</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">presidentsday</td>
 <td style="text-align: right;">-1.68</td>
 <td style="text-align: left;">0.1068</td>
@@ -1040,7 +1046,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1565.7</td>
 <td style="text-align: right;">93.3</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">nbafinalsend</td>
 <td style="text-align: right;">-1.53</td>
 <td style="text-align: left;">0.1413</td>
@@ -1048,7 +1054,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1564.5</td>
 <td style="text-align: right;">227.5</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">superbowl</td>
 <td style="text-align: right;">-1.31</td>
 <td style="text-align: left;">0.2016</td>
@@ -1056,7 +1062,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1565.5</td>
 <td style="text-align: right;">110.6</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">memorialday</td>
 <td style="text-align: right;">-1.31</td>
 <td style="text-align: left;">0.2039</td>
@@ -1064,7 +1070,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1566.1</td>
 <td style="text-align: right;">74.2</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">orthodoxeaster</td>
 <td style="text-align: right;">-1.11</td>
 <td style="text-align: left;">0.2816</td>
@@ -1072,7 +1078,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1565.9</td>
 <td style="text-align: right;">93.5</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">lentstart</td>
 <td style="text-align: right;">1.06</td>
 <td style="text-align: left;">0.2979</td>
@@ -1080,7 +1086,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1567.8</td>
 <td style="text-align: right;">-73.9</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">nbafinalsstart</td>
 <td style="text-align: right;">-0.99</td>
 <td style="text-align: left;">0.333</td>
@@ -1088,7 +1094,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1566.1</td>
 <td style="text-align: right;">74.9</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">stpatricksday</td>
 <td style="text-align: right;">-0.89</td>
 <td style="text-align: left;">0.3798</td>
@@ -1096,7 +1102,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1566.3</td>
 <td style="text-align: right;">49.6</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">thanksgiving</td>
 <td style="text-align: right;">0.88</td>
 <td style="text-align: left;">0.3895</td>
@@ -1104,7 +1110,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1567.5</td>
 <td style="text-align: right;">-57.7</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">valentinesday</td>
 <td style="text-align: right;">-0.85</td>
 <td style="text-align: left;">0.4044</td>
@@ -1112,7 +1118,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1566.2</td>
 <td style="text-align: right;">55.4</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">ramadanstarts</td>
 <td style="text-align: right;">-0.78</td>
 <td style="text-align: left;">0.4447</td>
@@ -1120,7 +1126,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1565.7</td>
 <td style="text-align: right;">111.2</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">mothersday</td>
 <td style="text-align: right;">-0.74</td>
 <td style="text-align: left;">0.469</td>
@@ -1128,7 +1134,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1566.2</td>
 <td style="text-align: right;">65.6</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">purimend</td>
 <td style="text-align: right;">0.71</td>
 <td style="text-align: left;">0.4842</td>
@@ -1136,7 +1142,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1567.3</td>
 <td style="text-align: right;">-36.4</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">martinlutherkingday</td>
 <td style="text-align: right;">-0.57</td>
 <td style="text-align: left;">0.5748</td>
@@ -1144,7 +1150,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1566.6</td>
 <td style="text-align: right;">27.2</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">veteransday</td>
 <td style="text-align: right;">0.49</td>
 <td style="text-align: left;">0.6297</td>
@@ -1152,7 +1158,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1567.2</td>
 <td style="text-align: right;">-26.5</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">pesachend</td>
 <td style="text-align: right;">-0.45</td>
 <td style="text-align: left;">0.656</td>
@@ -1160,15 +1166,15 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1566.5</td>
 <td style="text-align: right;">37.9</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;">christmas</td>
+<tr class="even">
+<td style="text-align: left;">christmaspre</td>
 <td style="text-align: right;">-0.41</td>
 <td style="text-align: left;">0.6859</td>
 <td style="text-align: right;">1590.9</td>
 <td style="text-align: right;">1566.7</td>
 <td style="text-align: right;">24.2</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">orthodoxchristmas</td>
 <td style="text-align: right;">0.37</td>
 <td style="text-align: left;">0.7169</td>
@@ -1176,7 +1182,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1567.1</td>
 <td style="text-align: right;">-18.1</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">lentweek2</td>
 <td style="text-align: right;">0.33</td>
 <td style="text-align: left;">0.7474</td>
@@ -1184,7 +1190,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1567.2</td>
 <td style="text-align: right;">-23.6</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">cincodemayo</td>
 <td style="text-align: right;">-0.05</td>
 <td style="text-align: left;">0.9627</td>
@@ -1192,7 +1198,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <td style="text-align: right;">1566.8</td>
 <td style="text-align: right;">5.1</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">eidaladha</td>
 <td style="text-align: right;">0.01</td>
 <td style="text-align: left;">0.9959</td>
@@ -1227,7 +1233,7 @@ Vcells 53861038 411.0  204496293 1560.2      65536 233402782 1780.8</code></pre>
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Define Predictors &amp; Helper</span></span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="co"># -----------------------------</span></span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>sig_events <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"snap_TX"</span>, <span class="st">"halloween"</span>, <span class="st">"columbusday"</span>, <span class="st">"laborday"</span>,</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>                <span class="st">"independenceday"</span>, <span class="st">"fathersday"</span>, <span class="st">"easter"</span>, <span class="st">"eidalfitr"</span>, <span class="st">"christmas"</span>)</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>                <span class="st">"independenceday"</span>, <span class="st">"fathersday"</span>, <span class="st">"easter"</span>, <span class="st">"eidalfitr"</span>)</span>
 <span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>build_harmonic_formula <span class="ot">&lt;-</span> <span class="cf">function</span>(K, <span class="at">include_price =</span> <span class="cn">FALSE</span>, <span class="at">include_events =</span> <span class="cn">FALSE</span>) {</span>
 <span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>  rhs <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"fourier(period = 'year', K = "</span>, K, <span class="st">")"</span>)</span>

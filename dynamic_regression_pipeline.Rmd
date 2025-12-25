@@ -67,6 +67,7 @@ for(evt in event_types) {
   # Create a clean column name (remove spaces and special chars)
   col_name <- str_replace_all(evt, "[^[:alnum:]]", "")
   
+  # temporary helper to identify the specific event date
   calendar <- calendar %>%
     mutate(
       is_event_today = coalesce(event_name_1 == evt, FALSE) | coalesce(event_name_2 == evt, FALSE)
@@ -76,8 +77,11 @@ for(evt in event_types) {
   if (evt == "Christmas") {
     calendar <- calendar %>%
       mutate(
-        !!col_name := as.integer(
-          # EXCLUDE current day, only check leads (preceding days)
+        # Column 1: JUST Christmas Day
+        !!paste0(col_name, "Day") := as.integer(is_event_today),
+        
+        # Column 2: JUST the 3 days before Christmas
+        !!paste0(col_name, "Pre") := as.integer(
           lead(is_event_today, 1, default = FALSE) |
           lead(is_event_today, 2, default = FALSE) |
           lead(is_event_today, 3, default = FALSE)
@@ -86,8 +90,8 @@ for(evt in event_types) {
   } else {
     calendar <- calendar %>%
       mutate(
+        # Standard Logic: Combine Day + 3 Days Before
         !!col_name := as.integer(
-          # INCLUDE current day along with leads
           is_event_today |
           lead(is_event_today, 1, default = FALSE) |
           lead(is_event_today, 2, default = FALSE) |
@@ -356,7 +360,7 @@ target_events_list <- c(
   "stpatricksday", "purimend", "orthodoxeaster", "pesachend", "cincodemayo", 
   "mothersday", "memorialday", "nbafinalsstart", "nbafinalsend", "fathersday", 
   "independenceday", "ramadanstarts", "eidalfitr", "laborday", "columbusday", 
-  "halloween", "eidaladha", "veteransday", "thanksgiving", "christmas", 
+  "halloween", "eidaladha", "veteransday", "thanksgiving", "christmasday", "christmaspre", 
   "chanukahend", "newyear", "orthodoxchristmas", "martinlutherkingday", "easter",
   "snap_TX"
 )
@@ -472,7 +476,7 @@ target_events_list <- c(
   "stpatricksday", "purimend", "orthodoxeaster", "pesachend", "cincodemayo", 
   "mothersday", "memorialday", "nbafinalsstart", "nbafinalsend", "fathersday", 
   "independenceday", "ramadanstarts", "eidalfitr", "laborday", "columbusday", 
-  "halloween", "eidaladha", "veteransday", "thanksgiving", "christmas", 
+  "halloween", "eidaladha", "veteransday", "thanksgiving", "christmasday", "christmaspre", 
   "chanukahend", "newyear", "orthodoxchristmas", "martinlutherkingday", "easter",
   "snap_TX"
 )
@@ -574,7 +578,7 @@ print(paste("Processing ALL", length(unique(product_tsibble$id)), "products."))
 # 1. Define Predictors & Helper
 # -----------------------------
 sig_events <- c("snap_TX", "halloween", "columbusday", "laborday",
-                "independenceday", "fathersday", "easter", "eidalfitr", "christmas")
+                "independenceday", "fathersday", "easter", "eidalfitr")
 
 build_harmonic_formula <- function(K, include_price = FALSE, include_events = FALSE) {
   rhs <- paste0("fourier(period = 'year', K = ", K, ")")
